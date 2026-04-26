@@ -9,7 +9,7 @@ services:
       - node.name=elasticsearch
       - cluster.name=soc-elk
       - discovery.type=single-node
-      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+      - "ELASTIC_PASSWORD=${ELASTIC_PASSWORD}"
       - xpack.security.enabled=true
       - xpack.security.http.ssl.enabled=false
       - ES_JAVA_OPTS=-Xms3g -Xmx3g
@@ -30,7 +30,7 @@ services:
     container_name: logstash
     environment:
       - LS_JAVA_OPTS=-Xms1g -Xmx1g
-      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+      - "ELASTIC_PASSWORD=${ELASTIC_PASSWORD}"
     volumes:
       - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
       - ./logstash/pipeline:/usr/share/logstash/pipeline:ro
@@ -50,7 +50,7 @@ services:
       - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
       - ELASTICSEARCH_USERNAME=kibana_system
       - ELASTICSEARCH_PASSWORD=${KIBANA_PASSWORD}
-      - XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY=${KIBANA_ENCRYPTION_KEY}
+      - "XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY=${KIBANA_ENCRYPTION_KEY}"
     ports:
       - "5601:5601"
     networks:
