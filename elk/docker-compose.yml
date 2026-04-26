@@ -1,5 +1,7 @@
 version: '3.8'
+
 services:
+
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.13.0
     container_name: elasticsearch
@@ -18,10 +20,11 @@ services:
     volumes:
       - es_data:/usr/share/elasticsearch/data
     ports:
-      - '9200:9200'
+      - "9200:9200"
     networks:
       - elk-net
     restart: unless-stopped
+
   logstash:
     image: docker.elastic.co/logstash/logstash:8.13.0
     container_name: logstash
@@ -32,13 +35,14 @@ services:
       - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
       - ./logstash/pipeline:/usr/share/logstash/pipeline:ro
     ports:
-      - '5044:5044'
-      - '5140:5140/udp'
+      - "5044:5044"
+      - "5140:5140/udp"
     networks:
       - elk-net
     depends_on:
       - elasticsearch
     restart: unless-stopped
+
   kibana:
     image: docker.elastic.co/kibana/kibana:8.13.0
     container_name: kibana
@@ -48,14 +52,16 @@ services:
       - ELASTICSEARCH_PASSWORD=${KIBANA_PASSWORD}
       - XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY=${KIBANA_ENCRYPTION_KEY}
     ports:
-      - '5601:5601'
+      - "5601:5601"
     networks:
       - elk-net
     depends_on:
       - elasticsearch
     restart: unless-stopped
+
 volumes:
   es_data:
+
 networks:
   elk-net:
     driver: bridge
