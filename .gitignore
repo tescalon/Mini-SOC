@@ -1,0 +1,25 @@
+# =============================================================================
+# .gitignore - Mini-SOC Lab
+# =============================================================================
+
+# --- Secrets ---
+.env
+*.key
+*.pem
+
+# --- Données persistantes Docker ---
+es_data/
+elasticsearch-data/
+thehive-data/
+cortex-data/
+opencti-data/
+cassandra-data/
+minio-data/
+
+# --- Logs ---
+*.log
+logs/
+
+# --- OS ---
+.DS_Store
+Thumbs.db

@@ -1,0 +1,35 @@
+name: "CI - Validate"
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+
+  docker-compose-lint:
+    name: "Validate docker-compose ELK"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Créer un .env factice
+        run: |
+          echo "ELASTIC_PASSWORD=dummy" > elk/.env
+          echo "KIBANA_PASSWORD=dummy" >> elk/.env
+          echo "KIBANA_ENCRYPTION_KEY=dummydummydummydummydummydummydu" >> elk/.env
+
+      - name: Valider docker-compose ELK
+        run: docker compose -f elk/docker-compose.yml config --quiet
+
+  yaml-lint:
+    name: "YAML Lint"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install yamllint
+      - run: |
+          yamllint -d relaxed elk/docker-compose.yml
+          yamllint -d relaxed elk/logstash/config/logstash.yml
+          yamllint -d relaxed winlogbeat/winlogbeat.yml
