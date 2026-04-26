@@ -1,10 +1,4 @@
-version: '3.8'
-
-# =============================================================================
-# ELK Stack 8.13 - SIEM
-# Démarrage : docker compose up -d
-# Prérequis  : fichier .env présent (copier .env.example et remplir)
-# =============================================================================
+﻿version: '3.8'
 
 services:
 
@@ -15,7 +9,7 @@ services:
       - node.name=elasticsearch
       - cluster.name=soc-elk
       - discovery.type=single-node
-      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+      - ELASTIC_PASSWORD=
       - xpack.security.enabled=true
       - xpack.security.http.ssl.enabled=false
       - ES_JAVA_OPTS=-Xms3g -Xmx3g
@@ -36,13 +30,13 @@ services:
     container_name: logstash
     environment:
       - LS_JAVA_OPTS=-Xms1g -Xmx1g
-      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+      - ELASTIC_PASSWORD=
     volumes:
       - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
       - ./logstash/pipeline:/usr/share/logstash/pipeline:ro
     ports:
-      - "5044:5044"   # Beats (Winlogbeat)
-      - "5140:5140/udp"  # Syslog UDP
+      - "5044:5044"
+      - "5140:5140/udp"
     networks:
       - elk-net
     depends_on:
@@ -55,8 +49,8 @@ services:
     environment:
       - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
       - ELASTICSEARCH_USERNAME=kibana_system
-      - ELASTICSEARCH_PASSWORD=${KIBANA_PASSWORD}
-      - XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY=${KIBANA_ENCRYPTION_KEY}
+      - ELASTICSEARCH_PASSWORD=
+      - XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY=
     ports:
       - "5601:5601"
     networks:
