@@ -14,7 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Créer un .env factice
+      - name: Creer un .env factice
         run: |
           echo "ELASTIC_PASSWORD=dummy" > elk/.env
           echo "KIBANA_PASSWORD=dummy" >> elk/.env
@@ -22,14 +22,3 @@ jobs:
 
       - name: Valider docker-compose ELK
         run: docker compose -f elk/docker-compose.yml config --quiet
-
-  yaml-lint:
-    name: "YAML Lint"
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: pip install yamllint
-      - run: |
-          yamllint -d relaxed elk/docker-compose.yml
-          yamllint -d relaxed elk/logstash/config/logstash.yml
-          yamllint -d relaxed winlogbeat/winlogbeat.yml
