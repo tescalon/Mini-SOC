@@ -1,7 +1,5 @@
-﻿version: '3.8'
-
+version: '3.8'
 services:
-
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.13.0
     container_name: elasticsearch
@@ -9,7 +7,7 @@ services:
       - node.name=elasticsearch
       - cluster.name=soc-elk
       - discovery.type=single-node
-      - ELASTIC_PASSWORD=
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
       - xpack.security.enabled=true
       - xpack.security.http.ssl.enabled=false
       - ES_JAVA_OPTS=-Xms3g -Xmx3g
@@ -20,48 +18,44 @@ services:
     volumes:
       - es_data:/usr/share/elasticsearch/data
     ports:
-      - "9200:9200"
+      - '9200:9200'
     networks:
       - elk-net
     restart: unless-stopped
-
   logstash:
     image: docker.elastic.co/logstash/logstash:8.13.0
     container_name: logstash
     environment:
       - LS_JAVA_OPTS=-Xms1g -Xmx1g
-      - ELASTIC_PASSWORD=
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
     volumes:
       - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
       - ./logstash/pipeline:/usr/share/logstash/pipeline:ro
     ports:
-      - "5044:5044"
-      - "5140:5140/udp"
+      - '5044:5044'
+      - '5140:5140/udp'
     networks:
       - elk-net
     depends_on:
       - elasticsearch
     restart: unless-stopped
-
   kibana:
     image: docker.elastic.co/kibana/kibana:8.13.0
     container_name: kibana
     environment:
       - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
       - ELASTICSEARCH_USERNAME=kibana_system
-      - ELASTICSEARCH_PASSWORD=
-      - XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY=
+      - ELASTICSEARCH_PASSWORD=${KIBANA_PASSWORD}
+      - XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY=${KIBANA_ENCRYPTION_KEY}
     ports:
-      - "5601:5601"
+      - '5601:5601'
     networks:
       - elk-net
     depends_on:
       - elasticsearch
     restart: unless-stopped
-
 volumes:
   es_data:
-
 networks:
   elk-net:
     driver: bridge
