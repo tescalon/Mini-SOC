@@ -5,7 +5,7 @@
 [![CTI](https://img.shields.io/badge/CTI-OpenCTI%206-blueviolet)](./opencti/)
 [![OS](https://img.shields.io/badge/OS-Windows%2011%20%2B%20Sysmon-blue)](./winlogbeat/)
 
-Projet personnel de cybersécurité — déploiement d'une stack SOC open source complète sur 3 machines physiques. L'objectif était de simuler un vrai environnement de détection : collecter des événements Windows réels, les corréler dans un SIEM, déclencher des alertes, créer des cases de réponse automatiquement et enrichir avec de la Threat Intelligence.
+Projet personnel de cybersécurité. Déploiement d'une stack SOC open source complète sur 3 machines physiques. L'objectif était de simuler un vrai environnement de détection : collecter des événements Windows réels, les corréler dans un SIEM, déclencher des alertes, créer des cases de réponse automatiquement et enrichir avec de la Threat Intelligence.
 
 Tout est fonctionnel et testé avec de vrais scénarios d'attaque simulés localement.
 
@@ -25,7 +25,7 @@ Tout est fonctionnel et testé avec de vrais scénarios d'attaque simulés local
 
 ## Flux de données
 
-C'est la partie centrale du projet — comment un événement Windows devient une alerte enrichie avec du contexte Threat Intel.
+C'est la partie centrale du projet, comment un événement Windows devient une alerte enrichie avec du contexte Threat Intel.
 
 ```
 [PC3 - Windows 11]
