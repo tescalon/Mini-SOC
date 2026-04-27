@@ -192,8 +192,4 @@ Infra    : Docker Desktop + WSL2 + Windows 11
 
 ## Ce qui reste à faire
 
-- Intégrer Shuffle (SOAR open source) pour automatiser les playbooks de réponse
-- Ajouter des règles de détection sur les logs réseau (pfSense → Logstash via syslog)
-- Relier ce SOC au homelab réseau pour superviser les deux projets depuis Kibana
-- Déployer un agent Elastic sur les pfSense pour enrichir la visibilité réseau
-- Tester des scénarios plus avancés (lateral movement, persistence via scheduled tasks)
+- 
