@@ -1,0 +1,146 @@
+﻿version: '3.8'
+
+services:
+  redis:
+    image: redis:7.2
+    container_name: redis-octi
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    networks:
+      - soc-net
+
+  rabbitmq:
+    image: rabbitmq:3.12-management
+    container_name: rabbitmq
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASS}
+    restart: unless-stopped
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - soc-net
+
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    command: server /data --console-address ":9090"
+    environment:
+      - MINIO_ROOT_USER=${MINIO_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_PASS}
+    restart: unless-stopped
+    volumes:
+      - minio_data:/data
+    networks:
+      - soc-net
+
+  opencti:
+    image: opencti/platform:6.0.5
+    container_name: opencti
+    environment:
+      - NODE_OPTIONS=--max-old-space-size=1536
+      - APP__PORT=8080
+      - APP__BASE_URL=http://localhost:8080
+      - APP__ADMIN__EMAIL=${OPENCTI_ADMIN_EMAIL}
+      - APP__ADMIN__PASSWORD=${OPENCTI_ADMIN_PASS}
+      - APP__ADMIN__TOKEN=${OPENCTI_ADMIN_TOKEN}
+      - REDIS__HOSTNAME=redis-octi
+      - REDIS__PORT=6379
+      - ELASTICSEARCH__URL=http://es-thehive:9200
+      - MINIO__ENDPOINT=minio
+      - MINIO__PORT=9000
+      - MINIO__USE_SSL=false
+      - MINIO__ACCESS_KEY=${MINIO_USER}
+      - MINIO__SECRET_KEY=${MINIO_PASS}
+      - RABBITMQ__HOSTNAME=rabbitmq
+      - RABBITMQ__PORT=5672
+      - RABBITMQ__USERNAME=${RABBITMQ_USER}
+      - RABBITMQ__PASSWORD=${RABBITMQ_PASS}
+      - PROVIDERS__LOCAL__STRATEGY=LocalStrategy
+    ports:
+      - "8080:8080"
+    networks:
+      - soc-net
+    depends_on:
+      - redis
+      - rabbitmq
+      - minio
+    restart: unless-stopped
+
+  worker:
+    image: opencti/worker:6.0.5
+    environment:
+      - OPENCTI_URL=http://opencti:8080
+      - OPENCTI_TOKEN=${OPENCTI_ADMIN_TOKEN}
+      - WORKER_LOG_LEVEL=info
+    networks:
+      - soc-net
+    depends_on:
+      - opencti
+    restart: unless-stopped
+
+  connector-mitre:
+    image: opencti/connector-mitre:6.0.5
+    container_name: connector-mitre
+    environment:
+      - OPENCTI_URL=http://opencti:8080
+      - OPENCTI_TOKEN=${OPENCTI_ADMIN_TOKEN}
+      - CONNECTOR_ID=dfc2e166-c3c9-4c3d-890e-82fb7bad2345
+      - CONNECTOR_NAME=MITRE ATT&CK
+      - CONNECTOR_SCOPE=attack-pattern,course-of-action,intrusion-set,malware,tool,vulnerability
+      - CONNECTOR_LOG_LEVEL=info
+      - MITRE_INTERVAL=7
+    networks:
+      - soc-net
+    depends_on:
+      - opencti
+    restart: unless-stopped
+
+  connector-urlhaus:
+    image: opencti/connector-urlhaus:6.0.5
+    container_name: connector-urlhaus
+    environment:
+      - OPENCTI_URL=http://opencti:8080
+      - OPENCTI_TOKEN=${OPENCTI_ADMIN_TOKEN}
+      - CONNECTOR_ID=c4d5e6f7-a8b9-0123-cdef-012345678901
+      - CONNECTOR_NAME=URLhaus
+      - CONNECTOR_SCOPE=urlhaus
+      - CONNECTOR_LOG_LEVEL=info
+      - URLHAUS_CSV_URL=https://urlhaus.abuse.ch/downloads/csv_recent/
+      - URLHAUS_IMPORT_OFFLINE=true
+      - URLHAUS_INTERVAL=3
+    networks:
+      - soc-net
+    depends_on:
+      - opencti
+    restart: unless-stopped
+
+  connector-abusech:
+    image: opencti/connector-malwarebazaar-recent-additions:6.0.5
+    container_name: connector-abusech
+    environment:
+      - OPENCTI_URL=http://opencti:8080
+      - OPENCTI_TOKEN=${OPENCTI_ADMIN_TOKEN}
+      - CONNECTOR_ID=b3c4d5e6-f7a8-9012-bcde-f01234567890
+      - CONNECTOR_NAME=MalwareBazaar Recent Additions
+      - CONNECTOR_SCOPE=stix2
+      - CONNECTOR_LOG_LEVEL=info
+      - MALWAREBAZAAR_RECENT_ADDITIONS_API_URL=https://mb-api.abuse.ch/api/v1/
+      - MALWAREBAZAAR_RECENT_ADDITIONS_COOLDOWN_SECONDS=300
+      - MALWAREBAZAAR_RECENT_ADDITIONS_INCLUDE_TAGS=exe,dll,docm,xlsm,js,xll
+    networks:
+      - soc-net
+    depends_on:
+      - opencti
+    restart: unless-stopped
+
+volumes:
+  redis_data:
+  rabbitmq_data:
+  minio_data:
+
+networks:
+  soc-net:
+    external: true
+    name: thehive_soc-net
