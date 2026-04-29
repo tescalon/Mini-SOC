@@ -1,0 +1,108 @@
+﻿version: '3.8'
+
+# Ce compose tourne sur PC2.
+# Il crÃ©e le rÃ©seau soc-net utilisÃ© Ã©galement par opencti/docker-compose.yml.
+
+services:
+
+  # ---------- Base de donnÃ©es TheHive ----------------------------------------
+  cassandra:
+    image: cassandra:4.1
+    container_name: cassandra
+    environment:
+      - CASSANDRA_CLUSTER_NAME=thehive
+    volumes:
+      - cassandra_data:/var/lib/cassandra
+    networks:
+      - soc-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "cqlsh", "-e", "describe keyspaces"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+
+  # ---------- Elasticsearch dÃ©diÃ© PC2 (TheHive + OpenCTI) --------------------
+  es-thehive:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.18
+    container_name: es-thehive
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - es_thehive_data:/usr/share/elasticsearch/data
+    networks:
+      - soc-net
+    restart: unless-stopped
+
+  # ---------- TheHive 4 -------------------------------------------------------
+  thehive:
+    image: thehiveproject/thehive4:4.1.24
+    container_name: thehive
+    depends_on:
+      cassandra:
+        condition: service_healthy
+      es-thehive:
+        condition: service_started
+    ports:
+      - "9000:9000"
+    environment:
+      - JVM_OPTS=-Xms1g -Xmx1g
+    command:
+      - --secret
+      - "${THEHIVE_SECRET}"
+      - --cql-hostnames
+      - cassandra
+      - --index-backend
+      - elasticsearch
+      - --es-hostnames
+      - es-thehive
+      - --cortex-port
+      - "9001"
+      - --cortex-keys
+      - "${CORTEX_API_KEY}"
+    volumes:
+      - thehive_data:/opt/thp/thehive/files
+    networks:
+      - soc-net
+    restart: unless-stopped
+
+  # ---------- Cortex 3 (image custom avec Python) ----------------------------
+  cortex:
+    build:
+      context: .
+      dockerfile: Dockerfile-cortex
+    container_name: cortex
+    depends_on:
+      - es-thehive
+    ports:
+      - "9001:9001"
+    environment:
+      - JVM_OPTS=-Xms512m -Xmx512m
+    command:
+      - --secret
+      - "${THEHIVE_SECRET}"
+      - --es-hostnames
+      - es-thehive
+    volumes:
+      - cortex_data:/opt/cortex/jobs
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - soc-net
+    restart: unless-stopped
+
+volumes:
+  cassandra_data:
+  es_thehive_data:
+  thehive_data:
+  cortex_data:
+
+networks:
+  soc-net:
+    name: thehive_soc-net
+    driver: bridge
