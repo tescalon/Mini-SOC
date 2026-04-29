@@ -1,9 +1,13 @@
-﻿# --- Secrets ---
+# =============================================================================
+# .gitignore - Mini-SOC Lab
+# =============================================================================
+
+# --- Secrets ---
 .env
 *.key
 *.pem
 
-# --- DonnÃ©es persistantes Docker ---
+# --- Données persistantes Docker ---
 es_data/
 elasticsearch-data/
 thehive-data/

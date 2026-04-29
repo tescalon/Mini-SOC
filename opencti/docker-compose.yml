@@ -1,13 +1,6 @@
 ﻿version: '3.8'
 
-# Ce compose tourne sur PC2, aprÃ¨s thehive/docker-compose.yml.
-# Il utilise le rÃ©seau soc-net crÃ©Ã© par thehive/docker-compose.yml.
-# Lancer dans cet ordre :
-#   cd thehive && docker compose up -d
-#   cd ../opencti && docker compose up -d
-
 services:
-
   redis:
     image: redis:7.2
     container_name: redis-octi
