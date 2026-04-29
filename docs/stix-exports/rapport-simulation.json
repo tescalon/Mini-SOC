@@ -1,0 +1,7 @@
+﻿{
+  "type": "bundle",
+  "spec_version": "2.1",
+  "objects": [
+    {"id":"report--88c591bc-ea59-5ecd-ac24-630b76a8ba7a","spec_version":"2.1","type":"report","extensions":{"extension-definition--ea279b3e-5c71-4632-ac08-831c66a786ba":{"extension_type":"property-extension","id":"9fda457c-a662-4734-9b99-61b972a05000","type":"Report","created_at":"2026-04-29T08:10:04.481Z","updated_at":"2026-04-29T08:16:52.437Z","is_inferred":false,"creator_ids":["88ec0c6a-13ce-5e39-b486-354fe4a7084f"],"workflow_id":"3c754670-4b4a-4a07-bd01-61aeff4754a1"}},"created":"2026-04-29T08:09:47.000Z","modified":"2026-04-29T08:16:52.437Z","revoked":false,"confidence":100,"lang":"en","name":"Simulation attaque brute force + credential dump : Mini-SOC Lab","description":"Rapport issu des scenarios d'attaque simules en lab.\nBrute force 4625, PowerShell encode 4104, acces LSASS via Sysmon.","report_types":["threat-report"],"published":"2026-04-29T08:09:47.000Z","object_refs":["relationship--5423f6fa-2c3f-44c1-8344-c87509298613","relationship--5f4e09eb-2c93-4fe0-b9f4-7fc6f90a45ba","intrusion-set--68c08126-cf80-511e-bc7d-9292ae2b52b9","relationship--942dd81c-0ca5-4c1c-8deb-45667b7f4ba2","relationship--de9017e9-258d-48a8-b2de-06706a0cefdc","indicator--ac810018-ce16-549a-ad95-85a70ff69213","attack-pattern--5a9d0c10-3eab-5b54-9d30-d9ae590d238b","ipv4-addr--25a2131b-f91b-5680-bba8-a1d8c83fba86","attack-pattern--b99b2e84-d430-5d56-94f2-ccaceddce4ad","attack-pattern--272bb55a-8f0d-5d73-bb7c-dee9f8d2e586"]}
+  ]
+}
