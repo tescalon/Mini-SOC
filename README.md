@@ -7,14 +7,18 @@
 [![OS](https://img.shields.io/badge/OS-Windows%2011%20%2B%20WSL2-blue)](./winlogbeat/)
 
 Stack SOC open source complete deployee sur 3 machines physiques.
-Detection reseau (Suricata) + detection endpoint (Winlogbeat/Sysmon) + SIEM (ELK) +
-reponse aux incidents (TheHive) + enrichissement automatique (Cortex) +
-Threat Intelligence (OpenCTI). Tout est fonctionnel et teste avec de vrais
-scenarios d'attaque simules localement.
+Detection reseau (Suricata IDS) + detection endpoint (Winlogbeat/Sysmon) +
+SIEM (ELK 8.13) + reponse aux incidents (TheHive 4) +
+enrichissement automatique (Cortex 3) + Threat Intelligence (OpenCTI 6).
+
+Tout est fonctionnel et teste avec de vrais scenarios d'attaque simules localement.
+La chaine complete est automatisee : de la detection a l'enrichissement Cortex.
 
 ---
 
 ## Architecture
+
+![Schema architecture](docs/screenshots/Schema_mini-soc.png)
 
 | Machine | Role | CPU | RAM | Stack |
 | :--- | :--- | :--- | :--- | :--- |
@@ -24,40 +28,92 @@ scenarios d'attaque simules localement.
 
 ---
 
-## Flux de donnees complet
+## Flux de donnees
 
 ```
-[PC3 - Windows 11]          [PC1 - WSL2]
-  Sysmon + Winlogbeat          Suricata IDS
-  Events Windows               49 864 regles ET
-       |                            |
-       | Beats port 5044            | Filebeat
-       v                            v
-[PC1 - Logstash]  <---------  [PC1 - Elasticsearch]
-  Parsing + enrichissement         Stockage + indexation
-                                         |
-                                         v
-                               [PC1 - Kibana SIEM]
-                               Regles de detection
-                               MITRE ATT&CK mapping
-                                         |
-                                         | Webhook
-                                         v
-                               [PC2 - TheHive]
-                               Cases automatiques
-                               Workflow analyste IR
-                                         |
-                                         v
-                               [PC2 - Cortex]
-                               AbuseIPDB, VirusTotal,
-                               MaxMind GeoIP, TorProject
-                                         |
-                                         v
-                               [PC2 - OpenCTI]
-                               MITRE ATT&CK enrichi
-                               30 000 objets STIX 2.1
-                               Threat Intelligence
+[PC3 - Windows 11]                    [PC1 - WSL2]
+  Sysmon + Winlogbeat                   Suricata IDS
+  Events Windows                        49 864 regles ET
+          |                                   |
+          | Beats port 5044                   | Filebeat eve.json
+          v                                   v
+[PC1 - Logstash]  <----------  [PC1 - Elasticsearch 8.13]
+  Parsing + enrichissement           Stockage + indexation
+                                             |
+                                             v
+                                   [PC1 - Kibana SIEM]
+                                   6 regles de detection
+                                   MITRE ATT&CK mapping
+                                             |
+                                             | Webhook automatique
+                                             v
+                                   [PC2 - TheHive 4]
+                                   Cases automatiques
+                                   Workflow analyste IR
+                                             |
+                                             | auto-analyze.ps1
+                                             v
+                                   [PC2 - Cortex 3]
+                                   AbuseIPDB, VirusTotal,
+                                   MaxMind GeoIP, TorProject
+                                             |
+                                             v
+                                   [PC2 - OpenCTI 6]
+                                   30 000 objets STIX 2.1
+                                   184 groupes APT, 816 malwares
 ```
+
+---
+
+## Apercu
+
+### Dashboard Kibana SIEM - Security Overview
+![Dashboard Kibana](docs/screenshots/kibana-dashboard-overview.png)
+
+### Dashboard Filebeat Suricata - trafic reseau analyse
+![Dashboard Suricata](docs/screenshots/kibana-dashboard-overview2.png)
+
+### 6 Regles de detection actives - toutes succeeded
+![Regles Kibana](docs/screenshots/kibana-rules-list.png)
+
+### Alertes Windows detectees (Brute Force, PowerShell, LSASS, RDP)
+![Alertes Windows](docs/screenshots/kibana-alerts-windows.png)
+
+### Alertes reseau Suricata
+![Alertes Suricata](docs/screenshots/kibana-alerts-suricata.png)
+
+### Timeline d'attaque - 19 evenements en 22 secondes
+![Timeline](docs/screenshots/kibana-timeline-attack.png)
+
+### Cases TheHive crees automatiquement via webhook Kibana
+![Cases](docs/screenshots/thehive-cases-list.png)
+
+### Case Brute Force - workflow analyste complet
+![Case detail](docs/screenshots/thehive-case-detail.png)
+
+### Case Suricata - 3 observables enrichis par Cortex (AbuseIPDB + VirusTotal)
+![Observables Suricata](docs/screenshots/thehive-case-detail-suricata-observables.png)
+
+### Detail observable - analyzers Cortex disponibles
+![Cortex analyzers](docs/screenshots/thehive-case-detail-suricata-observables2.png)
+
+### Alertes TheHive creees automatiquement depuis Kibana (tags: kibana, automatic)
+![Alertes auto](docs/screenshots/thehive-alerts-auto.png)
+
+### Suricata IDS - alertes reseau en temps reel dans WSL2
+![Suricata](docs/screenshots/suricata-fast-log.png)
+
+### OpenCTI - 184 groupes APT, 816 malwares, 1 rapport de menace
+![OpenCTI](docs/screenshots/opencti-dashboard.png)
+
+### OpenCTI - 1.49K techniques MITRE ATT&CK importees
+![MITRE](docs/screenshots/opencti-attack-patterns.png)
+
+### OpenCTI - Acteur Lab Attacker lie a T1110, T1059.001, T1003.001
+![Lab Attacker](docs/screenshots/opencti-lab-attacker-graph.png)
+
+### OpenCTI - Rapport de menace STIX 2.1 exporte
+![Rapport](docs/screenshots/opencti-report.png)
 
 ---
 
@@ -69,17 +125,15 @@ scenarios d'attaque simules localement.
 | :--- | :--- | :--- | :--- |
 | Brute Force (threshold >= 5) | 4625 | High | T1110 |
 | PowerShell encode | 4104 | High | T1059.001 |
-| Creation de compte local | 4720 | Medium | T1136.001 |
-| Ajout dans groupe Admins | 4732 | High | T1078.003 |
-| Service Windows cree | 7045 | High | T1543.003 |
+| Acces LSASS - Credential Dumping | Sysmon 10 | Critical | T1003.001 |
+| Connexion RDP detectee | 4624 LogonType 10 | Medium | T1021.001 |
+| Compte ajoute groupe Admins | 4732 | High | T1078.003 |
 
-### Regles reseau (Suricata)
+### Regles reseau (Suricata + Filebeat)
 
 | Regle | Source | Severite | Description |
 | :--- | :--- | :--- | :--- |
-| Alertes Suricata | filebeat-* | High | Toutes alertes Suricata ET/GPL |
-
-**49 864 signatures** Emerging Threats chargees, mise a jour automatique quotidienne.
+| Alertes Suricata | filebeat-* | High | 49 864 signatures Emerging Threats |
 
 ---
 
@@ -100,7 +154,7 @@ scenarios d'attaque simules localement.
 # PC1 - ELK
 cd elk && docker compose up -d
 
-# PC2 - SOAR + CTI
+# PC2 - SOAR + CTI (dans cet ordre)
 cd thehive && docker compose up -d
 cd ../opencti && docker compose up -d
 ```
@@ -114,17 +168,12 @@ Guide complet : [docs/installation.md](./docs/installation.md)
 
 ---
 
-## Automatisation : chaine complete
+## Automatisation complete
 
-Quand une alerte est detectee, la chaine suivante se declenche automatiquement :
-
-1. **Suricata** detecte le trafic suspect -> alerte dans `eve.json`
-2. **Filebeat** envoie vers Elasticsearch
-3. **Kibana** rule engine se declenche toutes les 5 minutes
-4. **Webhook** cree un case dans TheHive
-5. **auto-analyze.ps1** detecte les nouveaux observables et lance Cortex
-6. **Cortex** enrichit chaque IP avec AbuseIPDB + VirusTotal
-7. **OpenCTI** fournit le contexte Threat Intelligence
+```
+Suricata detecte -> Filebeat -> Elasticsearch -> Kibana rule
+-> Webhook -> TheHive case -> auto-analyze.ps1 -> Cortex (AbuseIPDB + VirusTotal)
+```
 
 ---
 
@@ -132,49 +181,35 @@ Quand une alerte est detectee, la chaine suivante se declenche automatiquement :
 
 | Analyzer | Type | Utilite |
 | :--- | :--- | :--- |
-| AbuseIPDB_2_0 | IP | Score de reputation, signalements |
-| VirusTotal_GetReport_3_1 | IP/Hash/URL | Analyse multi-sources 91 moteurs |
+| AbuseIPDB_2_0 | IP | Score reputation, signalements |
+| VirusTotal_GetReport_3_1 | IP/Hash/URL | 91 moteurs |
 | MaxMind_GeoIP_4_0 | IP | Geolocalisation |
-| TorProject_1_0 | IP | Detection noeuds Tor |
+| TorProject_1_0 | IP | Noeuds Tor |
 | IP-API_1_1 | IP | ASN, organisation |
 | Abuse_Finder_3_0 | IP/Domain | Contacts abuse |
-| GoogleDNS_resolve_1_0_0 | Domain | Resolution DNS passive |
+| GoogleDNS_resolve_1_0_0 | Domain | DNS passif |
 
 ---
 
 ## Travaux pratiques realises
 
 ### Phase A - OpenCTI
-
-- Import MITRE ATT&CK complet : 29 991 objets STIX, 953 442 relations
-- Creation acteur fictif **Lab Attacker** lie a T1110, T1059.001, T1078.003
-- Ajout IOCs : IP Tor 185.220.101.1, indicator STIX, observable IPv4
-- Rapport de menace STIX 2.1 exporte
-- Documentation : [docs/opencti-report.md](./docs/opencti-report.md)
+- Import MITRE ATT&CK : 29 991 objets STIX, 953 442 relations, 1.49K techniques
+- 184 groupes APT, 816 malwares indexes
+- Acteur **Lab Attacker** + rapport STIX 2.1 exporte
 
 ### Phase B - TheHive / Cortex
-
-- Case complet workflow analyste : Investigation > Containment > Eradication > Recovery > Lessons Learned
-- Resolution True Positive avec summary de cloture
-- AbuseIPDB : score 100/100 sur 185.220.101.1 (noeud Tor, 50 rapports)
-- VirusTotal : analyse multi-sources sur IP
-- Script auto-analyze.ps1 : enrichissement automatique Cortex
-- Documentation : [docs/thehive-workflow.md](./docs/thehive-workflow.md)
+- Workflow analyste complet : Investigation > Containment > Eradication > Recovery > Lessons Learned
+- AbuseIPDB score 100/100 sur noeud Tor 185.220.101.1
+- Script `auto-analyze.ps1` : enrichissement automatique
 
 ### Phase C - Kibana SIEM
-
-- Dashboard custom 6 panels : alertes par severite, top Event IDs, timeline, usernames cibles, alertes par regle, machines supervisees
-- Timeline d'attaque complete : 19 evenements en 22 secondes
-- Sequence documentee : T1110 > T1136.001 > T1078.003
-- Documentation : [docs/kibana-timeline.md](./docs/kibana-timeline.md)
+- Dashboard 6 panels
+- Timeline 19 evenements en 22 secondes
 
 ### Phase D - Suricata IDS
-
-- Suricata 7.0.3 dans WSL2, 49 864 regles Emerging Threats
-- Filebeat -> Elasticsearch : 428+ alertes reseau indexees
-- Regle Kibana : `event.module:suricata AND event.kind:alert`
-- Chaine complete validee : Suricata -> ELK -> TheHive -> Cortex
-- Detection testee : GPL ATTACK_RESPONSE, ET USER_AGENTS BlackSun
+- 49 864 regles Emerging Threats
+- Chaine complete : Suricata -> ELK -> TheHive -> Cortex validee
 
 ---
 
@@ -182,46 +217,34 @@ Quand une alerte est detectee, la chaine suivante se declenche automatiquement :
 
 ```
 .
-|-- elk/
+|-- elk/                          # PC1 - SIEM
 |   |-- docker-compose.yml
-|   `-- logstash/
+|   -- logstash/
 |       |-- config/logstash.yml
-|       `-- pipeline/main.conf
-|
-|-- thehive/
+|       -- pipeline/main.conf
+|-- thehive/                      # PC2 - SOAR
 |   |-- docker-compose.yml
-|   `-- Dockerfile-cortex
-|
-|-- opencti/
-|   `-- docker-compose.yml
-|
-|-- suricata/
-|   |-- suricata.yaml          # Config Suricata WSL
-|   `-- filebeat.yml           # Config Filebeat -> ELK
-|
-|-- winlogbeat/
-|   `-- winlogbeat.yml
-|
+|   -- Dockerfile-cortex
+|-- opencti/                      # PC2 - CTI
+|   -- docker-compose.yml
+|-- suricata/                     # PC1 - IDS
+|   -- suricata-config-notes.md
+|-- winlogbeat/                   # PC3 - Collecte
+|   -- winlogbeat.yml
 |-- detection-rules/
-|   `-- detection-rules.md
-|
+|   -- detection-rules.md
 |-- scripts/
 |   |-- attack-simulation.ps1
 |   |-- healthcheck.ps1
-|   |-- auto-analyze.ps1       # Enrichissement Cortex automatique
+|   |-- auto-analyze.ps1
 |   |-- install-auto-analyze-task.ps1
-|   `-- suricata-start.sh
-|
+|   -- suricata-start.sh
 |-- docs/
 |   |-- installation.md
-|   |-- opencti-report.md
-|   |-- thehive-workflow.md
-|   |-- kibana-timeline.md
 |   |-- screenshots/
-|   `-- stix-exports/
-|
+|   -- stix-exports/
 |-- .env.example
-`-- .gitignore
+-- .gitignore
 ```
 
 ---
@@ -232,7 +255,7 @@ Quand une alerte est detectee, la chaine suivante se declenche automatiquement :
 SIEM     : Elasticsearch 8.13 + Logstash 8.13 + Kibana 8.13
 IDS      : Suricata 7.0.3 (WSL2) + 49 864 regles Emerging Threats
 SOAR     : TheHive 4.1.24 + Cortex 3.1.8
-CTI      : OpenCTI 6.0.5 + connecteurs MITRE/URLhaus/MalwareBazaar
+CTI      : OpenCTI 6.0.5 + MITRE/URLhaus/MalwareBazaar
 Collecte : Winlogbeat 8.13 + Sysmon + Filebeat 8.x
 Infra    : Docker + WSL2 + Windows 11
 ```
@@ -241,8 +264,8 @@ Infra    : Docker + WSL2 + Windows 11
 
 ## Ce qui pourrait etre ajoute
 
-- Regles Sigma converties automatiquement en regles Kibana (via sigma-cli)
-- Suricata en mode IPS (inline) pour bloquer le trafic malveillant
-- Dashboard OpenCTI correlant les IOCs detectes par Kibana
-- Authentification centralisee (SSO) entre les services
+- Regles Sigma converties en regles Kibana (sigma-cli)
+- Suricata en mode IPS pour bloquer le trafic malveillant
 - Zeek pour l'analyse de protocoles reseau avancee
+- Dashboard OpenCTI correlant IOCs Kibana et base CTI
+- Authentification centralisee (SSO) entre les services
