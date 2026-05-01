@@ -293,9 +293,8 @@ Infra    : Docker + WSL2 + Windows 11
 
 ## Ce que ce projet m'a appris
 
-J'avais deja fait du Wazuh en alternance a la mairie, quelques labs TryHackMe,
-mais deployer une stack SOC complete de A a Z sur trois machines physiques c'est
-une autre histoire.
+J'avais deja fait du Wazuh en alternance, quelques labs TryHackMe,
+mais deployer une stack SOC complete de A a Z sur plusieurs machines physiques.
 
 Le truc qui m'a le plus pris de temps c'est pas l'installation des outils, c'est
 les faire parler ensemble. Kibana qui envoie un webhook vers TheHive, TheHive qui
@@ -308,7 +307,7 @@ la meme configuration.
 J'ai appris a vraiment lire les logs. Pas juste chercher "error" et copier la
 ligne dans Google, mais comprendre ce qui se passe. Quand OpenCTI redemarrait
 en boucle apres avoir supprime un index Elasticsearch, c'est pas en cherchant
-l'erreur que j'ai trouve — c'est en remontant la chaine et en realisant que
+l'erreur que j'ai trouve, c'est en remontant la chaine et en realisant que
 le cache Redis etait corrompu.
 
 Sur la partie detection, j'avais sous-estime le travail de tuning. Ma regle
@@ -325,7 +324,7 @@ par d'autres outils. C'est un format que je vais revoir souvent.
 Ce que je retiens surtout : un projet technique qui marche une fois pour la demo
 et un projet utilisable au quotidien c'est pas la meme chose. La difference c'est
 l'automatisation et la documentation. Le script auto-analyze.ps1, les healthchecks,
-suricata-start.sh — sans ca a chaque reboot je passe 20 minutes a tout relancer
+suricata-start.sh, sans ca a chaque reboot je passe 20 minutes a tout relancer
 manuellement. Et la doc c'est pas pour faire joli sur le GitHub, c'est parce que
 dans 6 mois je ne me souviendrai plus pourquoi j'ai mis api/v0/alert au lieu de
 api/v1/alert dans le webhook TheHive.
