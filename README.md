@@ -16,6 +16,25 @@ La chaine complete est automatisee : de la detection a l'enrichissement Cortex.
 
 ---
 
+
+---
+
+## Table des matieres
+
+1. [Architecture](#architecture)
+2. [Flux de donnees](#flux-de-donnees)
+3. [Apercu](#apercu)
+4. [Detection : regles Kibana SIEM](#detection--regles-kibana-siem)
+5. [Services](#services)
+6. [Demarrage rapide](#demarrage-rapide)
+7. [Automatisation complete](#automatisation-complete)
+8. [Analyzers Cortex actifs](#analyzers-cortex-actifs)
+9. [Travaux pratiques realises](#travaux-pratiques-realises)
+10. [Structure du repo](#structure-du-repo)
+11. [Stack complete](#stack-complete)
+12. [Ce que ce projet m'a appris](#ce-que-ce-projet-ma-appris)
+
+---
 ## Architecture
 
 ![Schema architecture](docs/screenshots/Schema_mini-soc.png)
@@ -269,3 +288,44 @@ Infra    : Docker + WSL2 + Windows 11
 - Zeek pour l'analyse de protocoles reseau avancee
 - Dashboard OpenCTI correlant IOCs Kibana et base CTI
 - Authentification centralisee (SSO) entre les services
+
+---
+
+## Ce que ce projet m'a appris
+
+J'avais deja fait du Wazuh en alternance a la mairie, quelques labs TryHackMe,
+mais deployer une stack SOC complete de A a Z sur trois machines physiques c'est
+une autre histoire.
+
+Le truc qui m'a le plus pris de temps c'est pas l'installation des outils, c'est
+les faire parler ensemble. Kibana qui envoie un webhook vers TheHive, TheHive qui
+appelle Cortex, Cortex qui a besoin de Python et de cortexutils mais l'image
+Docker de base ne les a pas, l'image Amazon Corretto avec une cle GPG expiree
+qui fait planter le build... Chaque connexion entre deux outils a son lot de
+problemes qui ne sont documentes nulle part parce que personne ne fait exactement
+la meme configuration.
+
+J'ai appris a vraiment lire les logs. Pas juste chercher "error" et copier la
+ligne dans Google, mais comprendre ce qui se passe. Quand OpenCTI redemarrait
+en boucle apres avoir supprime un index Elasticsearch, c'est pas en cherchant
+l'erreur que j'ai trouve — c'est en remontant la chaine et en realisant que
+le cache Redis etait corrompu.
+
+Sur la partie detection, j'avais sous-estime le travail de tuning. Ma regle
+Suricata declenchait 200 alertes par execution parce que Suricata loggait aussi
+les connexions de Filebeat vers Elasticsearch. Il a fallu que je comprenne
+exactement ce qui circulait sur le reseau de mon lab pour ecrire des exclusions
+pertinentes. C'est exactement ce genre de chose qu'on fait dans un vrai SOC.
+
+OpenCTI m'a donne une vraie vision de ce qu'est la Threat Intelligence structuree.
+Avant ce projet je savais vaguement ce qu'etait STIX, maintenant j'ai cree des
+objets, lie des IOCs a des techniques MITRE, exporte un bundle JSON consommable
+par d'autres outils. C'est un format que je vais revoir souvent.
+
+Ce que je retiens surtout : un projet technique qui marche une fois pour la demo
+et un projet utilisable au quotidien c'est pas la meme chose. La difference c'est
+l'automatisation et la documentation. Le script auto-analyze.ps1, les healthchecks,
+suricata-start.sh — sans ca a chaque reboot je passe 20 minutes a tout relancer
+manuellement. Et la doc c'est pas pour faire joli sur le GitHub, c'est parce que
+dans 6 mois je ne me souviendrai plus pourquoi j'ai mis api/v0/alert au lieu de
+api/v1/alert dans le webhook TheHive.
